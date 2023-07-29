@@ -18,15 +18,12 @@ public class DownloadService {
     public String downloadFile(String storage,String fileURL, String saveDir)
             throws IOException {
         String fileName = "";
-        //lấy file name
         fileName = fileURL.substring(fileURL.lastIndexOf("/") + 1,
                 fileURL.length());
-        // tiến hành kết nối tới địa chỉ download của file tài nguyên
         URL url = new URL(storage + fileName);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
         int responseCode = httpConn.getResponseCode();
 
-        // always check HTTP response code first
         if (responseCode == HttpURLConnection.HTTP_OK) {
             String disposition = httpConn.getHeaderField("Content-Disposition");
             String contentType = httpConn.getContentType();
@@ -40,11 +37,9 @@ public class DownloadService {
 //                            disposition.length() - 1);
 //                }
 //            }
-            //lấy tài nguyên và lưu trữ
             InputStream inputStream = httpConn.getInputStream();
             String saveFilePath = saveDir + File.separator + fileName;
             System.out.println(saveFilePath);
-            // opens an output stream to save into file
             FileOutputStream outputStream = new FileOutputStream(saveFilePath);
 
             int bytesRead = -1;
@@ -62,5 +57,9 @@ public class DownloadService {
         }
         httpConn.disconnect();
         return fileName;
+    }
+    public String getFileName(String fileURL){
+        return fileURL.substring(fileURL.lastIndexOf("/") + 1,
+                fileURL.length());
     }
 }

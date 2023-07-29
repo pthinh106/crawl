@@ -5,6 +5,14 @@
     <title>Title</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 </head>
+<style>
+    #previewDocx{
+        display: flex;
+        justify-content: center;
+        flex-direction: column-reverse;
+        text-align: center;
+    }
+</style>
 <body>
 
 
@@ -20,7 +28,7 @@
 
 
     <div class="container">
-        <form id="form" th:action="@{/crawl/download-multiple-to-url}" method="get">
+        <form  th:action="@{/crawl/download-multiple-to-url}" method="get">
             <div class="form-group">
                 <label for="multiple">URL address (download multiple)</label>
                 <input type="url" class="form-control" id="multiple" aria-describedby="emailHelp" placeholder="Enter url" name="url">
@@ -29,59 +37,69 @@
         </form>
     </div>
 
+    <div class="container">
+        <form id="form" th:action="@{/crawl/preview}" method="get">
+            <div class="form-group">
+                <label for="preview">URL address (preview docx)</label>
+                <input type="url" class="form-control" id="preview" aria-describedby="emailHelp" placeholder="Enter url" name="url">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+    <div id="previewDocx" >
 
     </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<!--<script>-->
-<!--    $("#form").submit(function(e) {-->
+<script>
+    $("#form").submit(function(e) {
 
-<!--        e.preventDefault(); // avoid to execute the actual submit of the form.-->
-<!--        var form = $(this);-->
+        e.preventDefault(); // avoid to execute the actual submit of the form.
+        var form = $(this);
 
-<!--        $.ajax({-->
-<!--            type: "POST",-->
-<!--            url: form.attr("action"),-->
-<!--            data: form.serialize(), // serializes the form's elements.-->
-<!--            success: async function (data) {-->
+        $.ajax({
+            type: "POST",
+            url: form.attr("action"),
+            data: form.serialize(), // serializes the form's elements.
+            success: async function (data) {
 
-<!--                for (const item of data) {-->
-<!--                    await downloadFile(data.url, data.fileName);-->
-<!--                    // forceDownload(data.url,data.fileName)-->
-<!--                }-->
+                for (const item of data) {
+                    const node = '<div><a href="https://docs.google.com/viewerng/viewer?url='+item.url+'"'+' target="_blank">View Doc '+item.fileName +'</a>' +
+                        '<span style="cursor: pointer; margin: 10px" class="btn btn-success" onclick=downloadFile('+'"'+item.url+'"'+','+'"'+item.fileName+'"'+')>Dowload</span></div>' +
+                        ''
+                    document.getElementById("previewDocx").insertAdjacentHTML('beforeend',node);
+                }
+            },
+            error: function ($xhr,textStatus,errorThrown) {
 
-
-<!--            },-->
-<!--            error: function ($xhr,textStatus,errorThrown) {-->
-
-<!--            }-->
-<!--        });-->
-<!--    });-->
-<!--    function downloadFile(url, name) {-->
-<!--        var link = document.createElement("a");-->
-<!--        link.download = name;-->
-<!--        link.href = url;-->
-<!--        document.body.appendChild(link);-->
-<!--        link.click();-->
-<!--        document.body.removeChild(link);-->
-<!--        delete link;-->
-<!--    }-->
-<!--    function forceDownload(url, fileName){-->
-<!--        var xhr = new XMLHttpRequest();-->
-<!--        xhr.open("GET", url, true);-->
-<!--        xhr.responseType = "blob";-->
-<!--        xhr.onload = function(){-->
-<!--            var urlCreator = window.URL || window.webkitURL;-->
-<!--            var Url = urlCreator.createObjectURL(this.response);-->
-<!--            var tag = document.createElement('a');-->
-<!--            tag.href = Url;-->
-<!--            tag.download = fileName;-->
-<!--            document.body.appendChild(tag);-->
-<!--            tag.click();-->
-<!--            document.body.removeChild(tag);-->
-<!--        }-->
-<!--        xhr.send();-->
-<!--    }-->
-<!--</script>-->
+            }
+        });
+    });
+    function downloadFile(url, name) {
+        var link = document.createElement("a");
+        link.download = name;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        delete link;
+    }
+    // function forceDownload(url, fileName){
+    //     var xhr = new XMLHttpRequest();
+    //     xhr.open("GET", url, true);
+    //     xhr.responseType = "blob";
+    //     xhr.onload = function(){
+    //         var urlCreator = window.URL || window.webkitURL;
+    //         var Url = urlCreator.createObjectURL(this.response);
+    //         var tag = document.createElement('a');
+    //         tag.href = Url;
+    //         tag.download = fileName;
+    //         document.body.appendChild(tag);
+    //         tag.click();
+    //         document.body.removeChild(tag);
+    //     }
+    //     xhr.send();
+    // }
+</script>
 
 </html>

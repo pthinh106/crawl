@@ -19,12 +19,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @RestController
-@RequestMapping(path = "/crawl",produces="application/json")
+@RequestMapping(path = "/crawl")
 @RequiredArgsConstructor
 @ResponseBody
 public class CrawlController {
@@ -32,15 +34,11 @@ public class CrawlController {
     @GetMapping("/download-to-url")
     public ResponseEntity<InputStreamResource>download(@RequestParam("url") String urlDetails) throws IOException {
         String fileName = "";
-        //sử dụng thư viện để get DOM (resource html) từ url;
         Document document = Jsoup.connect(urlDetails).get();
         for(Element a : document.select("a")){
-            //lấy các giá trị thuộc tính href trong thẻ a
             String url = a.attr("href");
-            //kiểm tra các thuộc tính đó có kết thúc là 1 tệp file hay không
             if(url.endsWith(".doc") || url.endsWith(".docx") ||url.endsWith(".xls") ||url.endsWith(".xlsx") ||
                     url.endsWith(".ppt") ||url.endsWith(".pptx") || url.endsWith(".pdf") || url.endsWith(".odt")){
-                //phân tích url từ trình duyệt để tìm đc link tải của tài nguyên và tiến hành download về
                  fileName =  downloadService.downloadFile("https://file-examples.com/storage/fee3d1095964bab199aee29/2017/02/",url, "C:\\Users\\ADMIN\\Downloads");
                  break;
             }
@@ -55,41 +53,25 @@ public class CrawlController {
                 break;
             }
         }
-        if(!fileName.isEmpty()){
-            InputStreamResource resource = new InputStreamResource(new FileInputStream("C:\\Users\\ADMIN\\Downloads\\" +fileName ));
-
-            return ResponseEntity.ok()
-                    .contentLength(fileName.length())
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(resource);
-        }
-
         HttpHeaders responseHeader = new HttpHeaders();
-        List<InputStreamResource> list = new ArrayList<>();
         try {
-                //tiến hành trả về file cho người dùng
-                File file = ResourceUtils.getFile("C:\\Users\\ADMIN\\Downloads\\" + fileName);
-                byte[] data = FileUtils.readFileToByteArray(file);
-                // Set mimeType trả về
-                responseHeader.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-                // Thiết lập thông tin trả về
-                responseHeader.set("Content-disposition", "attachment; filename=" + file.getName());
-                responseHeader.setContentLength(data.length);
-                InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(data));
-                InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
-                list.add(inputStreamResource);
-                File f= new File("C:\\Users\\ADMIN\\Downloads\\" + fileName);
-                //tiến hành xóa file khỏi server để tránh chiếm dụng tài nguyên server
-                if(f.delete())                      //returns Boolean value
-                {
-                    System.out.println(f.getName() + " deleted");   //getting and printing the file name
-                }
-
+            File file = ResourceUtils.getFile("C:\\Users\\ADMIN\\Downloads\\" + fileName);
+            byte[] data = FileUtils.readFileToByteArray(file);
+            responseHeader.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            responseHeader.set("Content-disposition", "attachment; filename=" + file.getName());
+            responseHeader.setContentLength(data.length);
+            InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(data));
+            InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
+            File f= new File("C:\\Users\\ADMIN\\Downloads\\" + fileName);
+            if(f.delete())
+            {
+                System.out.println(f.getName() + " deleted");
+            }
             return new ResponseEntity<InputStreamResource>(inputStreamResource, responseHeader, HttpStatus.OK);
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
             return new ResponseEntity<InputStreamResource>(null, responseHeader, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
 
 
     }
@@ -99,15 +81,11 @@ public class CrawlController {
 
         List<String> list = new ArrayList<>();
         String fileName = "";
-        //sử dụng thư viện để get DOM (resource html) từ url;
         Document document = Jsoup.connect(urlDetails).get();
         for(Element a : document.select("a")){
-            //lấy các giá trị thuộc tính href trong thẻ a
             String url = a.attr("href");
-            //kiểm tra các thuộc tính đó có kết thúc là 1 tệp file hay không
             if(url.endsWith(".doc") || url.endsWith(".docx") ||url.endsWith(".xls") ||url.endsWith(".xlsx") ||
                     url.endsWith(".ppt") ||url.endsWith(".pptx") || url.endsWith(".pdf") || url.endsWith(".odt")){
-                //phân tích url từ trình duyệt để tìm đc link tải của tài nguyên và tiến hành download về
                 fileName =  downloadService.downloadFile("https://file-examples.com/storage/fee3d1095964bab199aee29/2017/02/",url, "C:\\Users\\ADMIN\\Downloads");
                 list.add(fileName);
             }
@@ -122,8 +100,6 @@ public class CrawlController {
                 list.add(fileName);
             }
         }
-
-        // List of files to be downloaded
 
         List<Path> files = new ArrayList<>();
         for(String resource : list){
@@ -148,12 +124,32 @@ public class CrawlController {
         }
         for(String resource : list){
             File f= new File("C:\\Users\\ADMIN\\Downloads\\" + resource);
-            //tiến hành xóa file khỏi server để tránh chiếm dụng tài nguyên server
-            if(f.delete())                      //returns Boolean value
+            if(f.delete())
             {
-                System.out.println(f.getName() + " deleted");   //getting and printing the file name
+                System.out.println(f.getName() + " deleted");
             }
         }
     }
+    @PostMapping("/preview")
+    public ResponseEntity<List<Map<String,String>>> preview(@RequestParam("url") String urlDetails) throws IOException {
+        List<Map<String,String>> list = new ArrayList<>();
+
+        String fileName = "";
+        Document document = Jsoup.connect(urlDetails).get();
+        for(Element a : document.select("a")){
+            String url = a.attr("href");
+            if(url.endsWith(".doc") || url.endsWith(".docx") ||url.endsWith(".xls") ||url.endsWith(".xlsx") ||
+                    url.endsWith(".ppt") ||url.endsWith(".pptx") || url.endsWith(".pdf") || url.endsWith(".odt")){
+                fileName =  downloadService.getFileName(url);
+                Map<String,String> m = new HashMap<>();
+                m.put("url","https://file-examples.com/storage/fee3d1095964bab199aee29/2017/02/"+fileName);
+                m.put("fileName", fileName);
+                list.add(m);
+            }
+        }
+        return ResponseEntity.ok().body(list);
+
+    }
+
 
 }
